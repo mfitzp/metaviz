@@ -114,14 +114,15 @@ def get_pathway_color(analysis, m):
 def get_reaction_color(analysis, r):
     # For reactions, we need gene and protein data (where it exists)
     colors = []
-    if hasattr(r, 'proteins'):  # Dummy ReactionIntermediates will not; til that's fixed!
+    if hasattr(r, 'enzymes'):  # Dummy ReactionIntermediates will not; til that's fixed!
         for p in r.enzymes:
-            if p.id in analysis:
-                colors.append(analysis[p.id][0])
+            if p in analysis:
+                colors.append(analysis[p][0])
 
-            for g in p.genes:
-                if g.id in analysis:
-                    colors.append(analysis[g.id][0])
+            if hasattr(p, 'genes'):
+                for g in p.genes:
+                    if g in analysis:
+                        colors.append(analysis[g][0])
 
     if colors == []:
         colors = ['#cccccc']  # Mid-grey      
@@ -157,7 +158,7 @@ def remove_html_markup(s):
 
     return out
 
-def generate(pathways, reactions=[], analysis=None, organism='human',
+def generate(pathways, reactions=[], analysis=None, organism='HUMAN',
         cluster_by='pathway',
         
         show_enzymes=True,
@@ -240,8 +241,12 @@ def generate(pathways, reactions=[], analysis=None, organism='human',
 
     for p in pathways:
         for r in p.reactions:
+            if r is None:
+                continue
         # Check that this edge is between items in one of the specified pathways
-            compartments = [c for pr in r.enzymes for c in pr.compartments]
+            # FIXME: biocyc compartment support
+            #compartments = [c for pr in r.enzymes for c in pr.compartments]
+            compartments = []
             if compartments == []:
                 compartments = ['Non-compartmental']
             clusters['compartment'] |= set(compartments)  # Add to cluster set
@@ -251,6 +256,7 @@ def generate(pathways, reactions=[], analysis=None, organism='human',
 
             nmtins = set()
             nmtouts = set()
+            
             
             if not hasattr(r,'direction'):
                 r.direction = 'REVERSIBLE'
@@ -331,6 +337,7 @@ def generate(pathways, reactions=[], analysis=None, organism='human',
                 clusternodes = add_clusternodes(clusternodes, 'pathway', [p], [mtout])
                 clusternodes = add_clusternodes(clusternodes, 'compartment', compartments, [mtout])
 
+    print pathways
     pathway_compounds = [major_compounds(p.compounds) for p in pathways] # Get major only for the nodes
     pathway_compounds = [item for sublist in pathway_compounds for item in sublist]
 
@@ -551,15 +558,17 @@ def generate(pathways, reactions=[], analysis=None, organism='human',
         if r.type != 'dummy' and show_enzymes:
             label.append('%s' % r.name)
 
-            if hasattr(r, 'proteins') and r.enzymes:
+            if hasattr(r, 'enzymes') and r.enzymes:
                 if analysis:
                     prgenestr = ''
-                    for pr in r.enzymes:
-                        if pr.id in analysis:
-                            prgenestr += '<font color="%s">&#x25C6;</font>' % analysis[pr.id][0]
-                        for g in pr.genes:
-                            if g.id in analysis:
-                                prgenestr += '<font color="%s">&#x25cf;</font>' % analysis[g.id][0]
+                    if hasattr(r,'enzymes'):
+                        for pr in r.enzymes:
+                            if pr in analysis:
+                                prgenestr += '<font color="%s">&#x25C6;</font>' % analysis[pr][0]
+                                if hasattr(pr, 'genes'):
+                                    for g in pr.genes:
+                                        if g in analysis:
+                                            prgenestr += '<font color="%s">&#x25cf;</font>' % analysis[g][0]
                     label.append('%s' % prgenestr)  # pr.genes
 
             mcl = minor_compounds( r.compounds_left )
