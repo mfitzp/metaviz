@@ -2,7 +2,7 @@ from distutils.core import setup
 
 setup(
     name='metaviz',
-    version='0.0.3',
+    version='0.0.7',
     author='Martin Fitzpatrick',
     author_email='martin.fitzpatrick@gmail.com',
     packages=['metaviz'],

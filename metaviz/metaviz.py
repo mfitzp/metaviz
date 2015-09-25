@@ -337,7 +337,6 @@ def generate(pathways, reactions=[], analysis=None, organism='HUMAN',
                 clusternodes = add_clusternodes(clusternodes, 'pathway', [p], [mtout])
                 clusternodes = add_clusternodes(clusternodes, 'compartment', compartments, [mtout])
 
-    print pathways
     pathway_compounds = [major_compounds(p.compounds) for p in pathways] # Get major only for the nodes
     pathway_compounds = [item for sublist in pathway_compounds for item in sublist]
 
