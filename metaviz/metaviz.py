@@ -157,6 +157,22 @@ def remove_html_markup(s):
             out = out + c
 
     return out
+    
+    
+
+def common_start(*args):
+    """ returns the longest common substring from the beginning of sa and sb """
+    def _iter():
+        for s in zip(*args):
+            if len(set(s)) < len(args):
+                yield s[0]
+            else:
+                return
+
+    out = "".join(_iter()).strip()
+    result = [s for s in args if not s.startswith(out)]
+    result.insert(0, out)
+    return ', '.join(result)   
 
 def generate(pathways, reactions=[], analysis=None, organism='HUMAN',
         cluster_by='pathway',
@@ -555,7 +571,17 @@ def generate(pathways, reactions=[], analysis=None, organism='HUMAN',
             colorscheme = 'paired12'
 
         if r.type != 'dummy' and show_enzymes:
-            label.append('%s' % r.name)
+            if r.name:
+                label.append('%s' % r.name)
+            elif hasattr(r, 'enzymes'):
+                # Check for enzyme commonality name
+                s = common_start(*[e.name for e in r.enzymes])
+                if s:
+                    label.append('%s' % s)
+                else:
+                    label.append('%s' % r.id)
+            else:
+                label.append('%s' % r.id)
 
             if hasattr(r, 'enzymes') and r.enzymes:
                 if analysis:
